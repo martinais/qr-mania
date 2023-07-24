@@ -1,11 +1,6 @@
-from __future__ import print_function
-
-from datetime import date
-
-import requests
 import os.path
-from requests_oauth2client import *
-
+from __future__ import print_function
+from datetime import date
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -14,21 +9,18 @@ from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
-          'https://www.googleapis.com/auth/contacts',
           'https://www.googleapis.com/auth/userinfo.profile']
 
-# The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1VzZQVC9d68j9YyXwDK3_7GC1OedZPV9HTW6PbXgzGxU'
-
+# The ID and range of a sample spreadsheet
+SAMPLE_SPREADSHEET_ID = '1VzZQVC9d68j9YyXwDK3_7GC1OedZPV9HTW6PbXgzGxU'  # TODO to parmetrize
 lineNumber = '9'
+SAMPLE_RANGE_NAME = 'Library!G' + lineNumber + ':I' + lineNumber  # TODO improve the way to write in a specific area
 
-SAMPLE_RANGE_NAME = 'Library!G'+lineNumber+':I'+lineNumber
 
-def main():
+def connect():
     """Shows basic usage of the Sheets API.
-    Prints values from a sample spreadsheet.
-    """
-
+        Prints values from a sample spreadsheet.
+        """
 
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -48,6 +40,8 @@ def main():
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
 
+
+def getUserInfo(creds):
     try:
         service = build('people', 'v1', credentials=creds)
 
@@ -60,7 +54,7 @@ def main():
         connections = results.get('names', [])
         print(connections)
 
-        user = connections[0].get('displayName')
+        return connections[0].get('displayName')
         for person in connections:
             names = person.get('names', [])
             if names:
@@ -70,6 +64,7 @@ def main():
         print(err)
 
 
+def editSheetInfo(creds):
     try:
         service = build('sheets', 'v4', credentials=creds)
 
@@ -83,14 +78,13 @@ def main():
             print('No data found.')
             return
 
-
         """for row in values:
             # Print columns A and E, which correspond to indices 0 and 4.
             print(row[0])"""
 
         # Write data
 
-        if(values[0][0] == 'Disponible'):
+        if (values[0][0] == 'Disponible'):
             data = 'Emprumté'
             retrieveDate = date.today().strftime("%d/%m/%Y")
 
@@ -103,11 +97,10 @@ def main():
             range=SAMPLE_RANGE_NAME,
             valueInputOption='RAW',
             body={"values":
-                      [
-                          [data, user, retrieveDate]
-                      ]
-                }
-            #values='Emprumté'
+                [
+                    [data, user, retrieveDate]
+                ]
+            }
         ).execute()
         print(response)
 
@@ -115,9 +108,11 @@ def main():
         print(err)
 
 
+def main():
+    creds = connect()
+    getUserInfo(creds)
+    editSheetInfo(creds)
 
-    #response = requests.get("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", auth=BearerAuth())
-    #print(response)
 
 if __name__ == '__main__':
     main()
