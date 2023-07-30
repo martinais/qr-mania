@@ -9,6 +9,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from utils import editSheetInfo
+
 app = Flask(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
@@ -44,22 +46,10 @@ def add_book():
         return f'The previous user {name} has not correctly return the book'
     elif bookState[0] == 'Emprumté' and bookState[1] == name:
         print('2')
-        body = jsonify({"values" :"[['Disponible', '', '']]"})
-        print(body.json)
-        return session.put('https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}',
-                        #data={"values":[["Disponible","",""]]},
-                        #data = {
-                        #      "range": range,
-                        #      "majorDimension": 'ROWS',
-                        #      "values": [["Disponible","",""]]
-                        #},
-                        data = body.json,
-                        params =
-                       {'valueInputOption': 'RAW'}
-                    ).json()
+        return editSheetInfo(flow.credentials, name, range)
     elif bookState[0] == 'Disponible':
         print('3')
-        return session.put('https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}').json()
+        return editSheetInfo(flow.credentials, name, range)
         # return f"I'm {name} and I borrowed {bookId}"
 
 

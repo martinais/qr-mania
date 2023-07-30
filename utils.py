@@ -63,14 +63,14 @@ def getUserInfo(creds):
         print(err)
 
 
-def editSheetInfo(creds):
+def editSheetInfo(creds, user, range):
     try:
         service = build('sheets', 'v4', credentials=creds)
 
         # Call the Sheets API
         sheet = service.spreadsheets()
         result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                    range=SAMPLE_RANGE_NAME).execute()
+                                    range=range).execute()
         values = result.get('values', [])
 
         if not values:
@@ -93,7 +93,7 @@ def editSheetInfo(creds):
             user = ''
         response = sheet.values().update(
             spreadsheetId=SAMPLE_SPREADSHEET_ID,
-            range=SAMPLE_RANGE_NAME,
+            range=range,
             valueInputOption='RAW',
             body={"values":
                 [
@@ -101,7 +101,7 @@ def editSheetInfo(creds):
                 ]
             }
         ).execute()
-        print(response)
+        return response
 
     except HttpError as err:
         print(err)
