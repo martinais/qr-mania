@@ -9,10 +9,9 @@ COPY ./src .
 FROM base AS dev
 
 ENV FLASK_ENV development
-ENV FLASK_APP martinade
-CMD [ "flask", "run", "--host=0.0.0.0" ]
+CMD [ "python", "app.py" ]
 
 FROM base AS prod
 
 RUN pip install gunicorn
-CMD [ "gunicorn", "--bind", "0.0.0.0:80", "martinade:app" ]
+CMD [ "gunicorn", "--bind", "0.0.0.0:80", "app:app" ]
