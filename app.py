@@ -1,17 +1,24 @@
-import json
-
-from flask import Flask, request, redirect, jsonify
-import requests
 import os
+import json
+from flask import Flask, request, redirect
 from google_auth_oauthlib.flow import Flow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
-from utils import editSheetInfo
+from google_wrapper import return_book, book_available, borrow_book, get_owner, get_book_name, whoami
+
+from google_wrapper import read
 
 app = Flask(__name__)
+
+PAGE_NAME = os.environ.get('X_PAGE_NAME')
+SHEET_UID = os.environ.get('X_SHEET_UID')
+
+if not PAGE_NAME:
+    print("Missing environnement variable X_PAGE_NAME")
+    exit(1)
+if not SHEET_UID:
+    print("Missing environnement variable X_SHEET_UID")
+    exit(1)
+
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/userinfo.profile']
@@ -23,37 +30,30 @@ flow = Flow.from_client_secrets_file(
 )
 
 
-@app.route('/run')
+@ app.route('/run')
 def add_book():
-    print('HERE')
-    flow.fetch_token(code=request.args.get('code'))
-    session = flow.authorized_session()
-    print(session)
     bookId = request.args.get('state')
-    print(bookId)
+    authFlowCode = request.args.get('code')
 
-    name = session.get('https://www.googleapis.com/userinfo/v2/me').json()['name']
+    flow.fetch_token(code=authFlowCode)
+    session = flow.authorized_session()
 
-    spreadsheetId = '1VzZQVC9d68j9YyXwDK3_7GC1OedZPV9HTW6PbXgzGxU'  # TODO to parmetrize
-    range = 'Library!G' + bookId + ':I' + bookId  # TODO improve the way to write in a specific area
+    conn = (session, flow, SHEET_UID, PAGE_NAME)
+    name = whoami(conn)
+    book_name = get_book_name(conn, bookId)
 
-    bookState = \
-    session.get(f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/{range}').json()['values'][0]
-    print(bookState)
-
-    if bookState[0] == 'Emprumté' and bookState[1] != name:
-        print('1')
-        return f'The previous user {name} has not correctly return the book'
-    elif bookState[0] == 'Emprumté' and bookState[1] == name:
-        print('2')
-        return editSheetInfo(flow.credentials, name, range)
-    elif bookState[0] == 'Disponible':
-        print('3')
-        return editSheetInfo(flow.credentials, name, range)
-        # return f"I'm {name} and I borrowed {bookId}"
+    if book_available(conn, bookId):
+        borrow_book(conn, bookId, name)
+        return f"Book '{book_name}' borrowed by {name}"
+    else:
+        owner = get_owner(conn, bookId)
+        if owner == name:
+            return_book(conn, bookId)
+            return f"Book '{book_name}' returned by {name}"
+        return f"Previous user {owner} did not return '{book_name}'"
 
 
-@app.route('/loan/<int:book_id>')
+@ app.route('/loan/<int:book_id>')
 def loan(book_id):
     return redirect(flow.authorization_url(state=book_id)[0])
 
