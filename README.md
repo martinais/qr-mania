@@ -27,13 +27,13 @@ podman run \
 podman build --target prod --tag qrmania .
 podman run \
   --publish 8000:80 \
-  --env PAGE_NAME='...' \
-  --env SHEET_UID='...' \
-  --env BORROWED_LABEL='...' \
-  --env AVAILABLE_LABEL='...' \
-  --env BOOK_NAME_COL='...' \
-  --env BOOK_STATUS_COL='...' \
-  --env USERNAME_COL='...' \
-  --env DATE_COL='...' \
+  --env X_PAGE_NAME='...' \
+  --env X_SHEET_UID='...' \
+  --env X_BORROWED_LABEL='...' \
+  --env X_AVAILABLE_LABEL='...' \
+  --env X_BOOK_NAME_COL='...' \
+  --env X_BOOK_STATUS_COL='...' \
+  --env X_USERNAME_COL='...' \
+  --env X_DATE_COL='...' \
   qrmania
 ```
